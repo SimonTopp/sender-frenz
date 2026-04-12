@@ -1,10 +1,53 @@
 # Plan: common — Shared Foundations
 **04_2026 · common-foundations**
 
-Status: `PLANNED`
+Status: `PLANNED` *(amended 04_2026: added pacing model and config.py)*
 Implements: `src/sender_frenz/common/`
 Depends on: nothing (this module is the foundation)
 Blocking: all other modules
+
+---
+
+## Pacing Model
+
+The game has two intentional rhythms that all time-based constants must satisfy:
+
+| Goal | Target | Implication |
+|---|---|---|
+| Daily engagement | 1–2 check-ins per day | Meters must become urgent within 8–12 hours of neglect |
+| Progression feel | ~1 level-up per month | ~30 days of consistent good behaviour per level |
+
+### Production constants (derived)
+
+```
+hunger empties in   8h  → rate = 1.0 / 8  = 0.1250 Meter/hour
+hygiene empties in 12h  → rate = 1.0 / 12 = 0.0833 Meter/hour
+social empties in  24h  → rate = 1.0 / 24 = 0.0417 Meter/hour
+
+vampiric stage advances every 12h at score=0
+vampiric stage retreats at 0.5 stages/hour of interaction
+
+level-up threshold:  combined_health ≥ 0.75
+level-up sustain:    threshold held for ≥ 4 real hours
+→ rough monthly cadence: player must keep all three meters healthy
+  for the majority of ~30 days before a level is offered
+```
+
+### `time_scale` multiplier
+
+All time-based constants are derived by multiplying base production values by a
+`time_scale` factor. `time_scale = 1.0` is production. Higher values compress
+game time so the full lifecycle can be exercised quickly.
+
+| Mode | `time_scale` | 1 real hour feels like | Full monthly cycle in |
+|---|---|---|---|
+| `PRODUCTION_PACE` | `1.0` | 1 game hour | ~30 real days |
+| `TEST_PACE` | `720.0` | 30 game days | ~1 real hour |
+| `FAST_TEST_PACE` | `43200.0` | ~1.25 game years | ~1 real minute |
+
+`FAST_TEST_PACE` is for automated smoke tests that need to exercise level-up
+logic end-to-end without sleeping. Unit tests never use pace — they pass
+explicit `elapsed_seconds` and test pure arithmetic.
 
 ---
 
@@ -18,6 +61,33 @@ advance). No UI, no I/O, no side effects except where explicitly noted.
 ---
 
 ## Files
+
+### `config.py`
+
+Game-wide pace configuration. The only place where production vs. test timing
+is decided. Every other module derives its time constants from a `GamePace`
+instance injected at call time — nothing hardcodes a rate.
+
+```python
+@dataclass(frozen=True)
+class GamePace:
+    """Multiplier that scales all time-based game constants.
+
+    time_scale = 1.0  →  production timing
+    time_scale > 1.0  →  compressed time (useful for integration tests / demos)
+    """
+    time_scale: float  # must be > 0.0
+
+# Named instances — import these rather than constructing GamePace directly.
+PRODUCTION_PACE  = GamePace(time_scale=1.0)
+TEST_PACE        = GamePace(time_scale=720.0)     # 1 real hour ≈ 30 game days
+FAST_TEST_PACE   = GamePace(time_scale=43200.0)   # 1 real minute ≈ 30 game days
+```
+
+`config.py` has no imports from within `sender_frenz`. It is safe to import
+from anywhere.
+
+---
 
 ### `types.py`
 
@@ -133,17 +203,33 @@ passing an explicit `elapsed_seconds` value.
 ```python
 @dataclass(frozen=True)
 class DecayConfig:
-    hunger_rate:   float   # Meter lost per hour; default 0.125 (empties in 8h)
-    hygiene_rate:  float   # Meter lost per hour; default 0.0833 (empties in 12h)
-    social_rate:   float   # Meter lost per hour; default 0.0417 (empties in 24h)
-    vampiric_advance_hours: float  # hours at score=0 before stage advances; default 12
-    vampiric_retreat_rate:  float  # stages retreated per hour of interaction; default 0.5
+    hunger_rate:            float  # Meter lost per hour
+    hygiene_rate:           float  # Meter lost per hour
+    social_rate:            float  # Meter lost per hour
+    vampiric_advance_hours: float  # hours at score=0 before stage advances
+    vampiric_retreat_rate:  float  # stages retreated per hour of interaction
+
+    @classmethod
+    def from_pace(cls, pace: GamePace) -> "DecayConfig":
+        """Derive decay rates from a GamePace multiplier.
+
+        All base rates are calibrated for production timing (time_scale=1.0):
+          hunger empties in  8h, hygiene in 12h, social in 24h.
+        Higher time_scale compresses these proportionally.
+        """
+        s = pace.time_scale
+        return cls(
+            hunger_rate=0.1250 * s,
+            hygiene_rate=0.0833 * s,
+            social_rate=0.0417 * s,
+            vampiric_advance_hours=12.0 / s,
+            vampiric_retreat_rate=0.5 * s,
+        )
 ```
 
-Defaults encode the intended game loop rhythm:
-- Feed roughly every 8 hours or hunger becomes serious
-- Clean every 12 hours
-- Interact socially every 24 hours or drift begins
+Never construct `DecayConfig` directly in application code. Use
+`DecayConfig.from_pace(PRODUCTION_PACE)` (or `TEST_PACE` / `FAST_TEST_PACE`).
+Unit tests that test pure arithmetic may construct it directly.
 
 #### Functions
 
@@ -168,16 +254,26 @@ time_until_critical(meter: Meter, rate_per_hour: float, critical_threshold: floa
 
 Level progression rules and upgrade catalog references.
 
-#### Constants
+#### `LevelConfig`
 
 ```python
-# Combined health score required to unlock a level-up opportunity.
-# Combined score = (needs.hunger + needs.hygiene + social.score) / 3
-LEVEL_UP_THRESHOLD: Meter = 0.75
+@dataclass(frozen=True)
+class LevelConfig:
+    threshold: Meter  # combined_health must reach this to qualify; default 0.75
+    sustain_hours: float  # hours threshold must be held; default 4.0
 
-# How many hours the combined score must stay above the threshold
-# before a level-up is offered. Prevents gaming by momentary spikes.
-LEVEL_UP_SUSTAIN_HOURS: float = 4.0
+    @classmethod
+    def from_pace(cls, pace: GamePace) -> "LevelConfig":
+        """Derive level-up timing from a GamePace multiplier.
+
+        The threshold is pace-independent (it's a ratio, not a duration).
+        The sustain window shrinks with higher time_scale so demo/test runs
+        aren't blocked waiting for a 4-hour window.
+        """
+        return cls(
+            threshold=0.75,
+            sustain_hours=4.0 / pace.time_scale,
+        )
 ```
 
 #### `UpgradeOption`
@@ -197,8 +293,9 @@ class UpgradeOption:
 combined_health(avatar: Avatar) -> Meter
     Returns (hunger + hygiene + social_score) / 3.
 
-is_level_up_available(avatar: Avatar, sustained_since: Timestamp, now: Timestamp) -> bool
-    True if combined_health >= LEVEL_UP_THRESHOLD and the duration condition is met.
+is_level_up_available(avatar: Avatar, sustained_since: Timestamp, now: Timestamp,
+                      config: LevelConfig) -> bool
+    True if combined_health >= config.threshold and (now - sustained_since) >= sustain window.
 
 skin_options_for_level(level: int, catalog: Sequence[UpgradeOption]) -> tuple[UpgradeOption, ...]
     Returns options whose tier <= level and slug not already in avatar.level.skin_upgrades.
@@ -222,9 +319,10 @@ only defines the rules; it accepts catalogs as arguments so it stays decoupled.
 ## Implementation Order
 
 1. `types.py` — no dependencies; write first
-2. `models.py` — depends on `types.py`
-3. `decay.py` — depends on `models.py`
-4. `levels.py` — depends on `models.py`
+2. `config.py` — depends only on stdlib; defines `GamePace` and named instances
+3. `models.py` — depends on `types.py`
+4. `decay.py` — depends on `models.py` and `config.py`
+5. `levels.py` — depends on `models.py` and `config.py`
 
 Each file gets its tests written before moving to the next.
 
@@ -237,6 +335,10 @@ coverage is required (enforced by CI).
 
 Key test patterns:
 
+- **Pace config tests:** verify that `DecayConfig.from_pace(PRODUCTION_PACE)`
+  produces rates matching the documented base values; verify that
+  `DecayConfig.from_pace(TEST_PACE)` produces rates exactly `720x` those values.
+  Same for `LevelConfig`. Confirm `GamePace(time_scale=0)` raises `ValueError`.
 - **Decay tests:** pass explicit `elapsed_seconds` — no `time.time()` calls in
   production code, so no mocking needed.
 - **Meter boundary tests:** verify `apply_need_decay` never produces values
@@ -269,7 +371,7 @@ Key test patterns:
 
 ## Definition of Done
 
-- [ ] All four files implemented and passing `ruff`, `mypy`, and `pytest`
+- [ ] All five files implemented and passing `ruff`, `mypy`, and `pytest`
 - [ ] 100% branch coverage on `tests/common/`
 - [ ] Every public symbol has a Google-style docstring
 - [ ] This plan updated with `Status: COMPLETE` and any decisions made during
