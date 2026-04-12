@@ -153,6 +153,33 @@ Agents must treat stale documentation as a bug:
 
 ---
 
+## Aesthetic
+
+**Before generating any player-facing content, read [`docs/aesthetic.md`](docs/aesthetic.md) in full.**
+
+This includes: quips, system messages, achievement text, skin names, room item
+names, UI copy, flavor text, and any other text or visual element a player will
+encounter.
+
+The short version (not a substitute for reading the full guide):
+
+- The game looks like a **corrupted 8-bit arcade cabinet**: pixel art, CRT
+  scanlines, neon on black, glitch effects.
+- The aesthetic is **cyberpunk + horror**, always both, never just one.
+- The game is narrated by **THE SYSTEM** — a gleefully corporate, self-aware,
+  slightly menacing AI that treats player suffering as *engagement metrics*.
+  Its voice is the *Dungeon Crawler Carl* dungeon system: sarcastically helpful,
+  clinically warm, genuinely off.
+- System announcements are **ALL CAPS**. Flavor text is mixed case.
+- No emoji. No sincere exclamation points. No explained jokes.
+- Skins and room items follow a two-word naming convention and a level-tier
+  progression arc described in the guide.
+
+`docs/aesthetic.md` is the authoritative source. If this summary conflicts with
+it, the full guide wins. Update this summary if the full guide changes.
+
+---
+
 ## Agent Workflow Checklist
 
 Before marking any task complete, an agent must verify:
@@ -164,6 +191,7 @@ Before marking any task complete, an agent must verify:
 - [ ] Any changed or added public interface has a docstring
 - [ ] Any documentation that references changed behavior has been updated
 - [ ] The commit message clearly describes *why* the change was made
+- [ ] Any player-facing content follows `docs/aesthetic.md`
 
 ---
 
