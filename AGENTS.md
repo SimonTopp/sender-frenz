@@ -55,13 +55,57 @@ The repository documents itself. Agents must uphold this:
 
 ---
 
+## Tooling
+
+| Tool | Purpose | Command |
+|------|---------|---------|
+| [uv](https://docs.astral.sh/uv/) | Package management, virtualenvs, script running | `uv sync`, `uv add <pkg>`, `uv run <cmd>` |
+| [ruff](https://docs.astral.sh/ruff/) | Linting + formatting | `uv run ruff check .`, `uv run ruff format .` |
+| [mypy](https://mypy.readthedocs.io/) | Static type checking | `uv run mypy .` |
+| [pytest](https://docs.pytest.org/) + [pytest-cov](https://pytest-cov.readthedocs.io/) | Tests + coverage | `uv run pytest` |
+
+All tool configuration lives in `pyproject.toml`. Do not create separate
+`setup.cfg`, `.mypy.ini`, `tox.ini`, or `.flake8` files — keep config
+consolidated.
+
+**Installing dev dependencies:**
+
+```bash
+uv sync --group dev
+```
+
+**Adding a new runtime dependency:**
+
+```bash
+uv add <package>
+```
+
+**Adding a new dev-only dependency:**
+
+```bash
+uv add --group dev <package>
+```
+
+---
+
 ## Test Coverage
 
 **Target: 100% test coverage.**
 
 Agents must enforce this target actively, not passively:
 
-- **Before finishing any task**, run the test suite and check coverage.
+- **Before finishing any task**, run the full quality gate:
+
+  ```bash
+  uv run ruff format --check .
+  uv run ruff check .
+  uv run mypy .
+  uv run pytest
+  ```
+
+  `pytest` is configured in `pyproject.toml` to fail if coverage drops below
+  100% (`--cov-fail-under=100`), so a passing test run implies full coverage.
+
 - **If coverage drops below 100%**, write the missing tests before marking the
   task complete. Do not defer test writing to a follow-up.
 - **New code = new tests.** Every new function, method, class, or module must
@@ -69,13 +113,6 @@ Agents must enforce this target actively, not passively:
   edge cases.
 - **Bug fixes = regression tests.** Every bug fix must be accompanied by a
   test that would have caught the bug before the fix.
-- Use `pytest` with `pytest-cov` (or the project's configured test runner).
-  The command to check coverage is:
-
-  ```bash
-  pytest --cov=. --cov-report=term-missing
-  ```
-
 - If you open a PR and coverage is below 100%, explain in the PR description
   exactly which lines are uncovered and why (e.g., platform-specific code,
   abstract base class stubs that cannot be instantiated).
@@ -120,8 +157,10 @@ Agents must treat stale documentation as a bug:
 
 Before marking any task complete, an agent must verify:
 
-- [ ] All tests pass (`pytest`)
-- [ ] Coverage is at 100% (`pytest --cov=. --cov-report=term-missing`)
+- [ ] `uv run ruff format --check .` passes (no formatting violations)
+- [ ] `uv run ruff check .` passes (no lint violations)
+- [ ] `uv run mypy .` passes (no type errors)
+- [ ] `uv run pytest` passes, including 100% coverage gate
 - [ ] Any changed or added public interface has a docstring
 - [ ] Any documentation that references changed behavior has been updated
 - [ ] The commit message clearly describes *why* the change was made
