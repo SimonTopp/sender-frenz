@@ -1,7 +1,7 @@
 # Plan: common — Shared Foundations
 **04_2026 · common-foundations**
 
-Status: `PLANNED` *(amended 04_2026: added pacing model and config.py)*
+Status: `COMPLETE` *(amended 04_2026: added pacing model and config.py)*
 Implements: `src/sender_frenz/common/`
 Depends on: nothing (this module is the foundation)
 Blocking: all other modules
@@ -371,8 +371,20 @@ Key test patterns:
 
 ## Definition of Done
 
-- [ ] All five files implemented and passing `ruff`, `mypy`, and `pytest`
-- [ ] 100% branch coverage on `tests/common/`
-- [ ] Every public symbol has a Google-style docstring
-- [ ] This plan updated with `Status: COMPLETE` and any decisions made during
+- [x] All five files implemented and passing `ruff`, `mypy`, and `pytest`
+- [x] 100% branch coverage on `tests/common/` (107 tests, 187 statements)
+- [x] Every public symbol has a Google-style docstring
+- [x] This plan updated with `Status: COMPLETE` and any decisions made during
   implementation noted under Open Questions
+
+### Implementation notes
+
+- All type-alias imports (`AvatarId`, `Meter`, `RoomId`, `Timestamp`,
+  `Sequence`, `GamePace`) live inside `TYPE_CHECKING` blocks in the files that
+  consume them, since `from __future__ import annotations` makes all
+  annotations lazy strings. This satisfies ruff's `TCH` rules.
+- `TRY003` (long exception messages outside exception classes) is globally
+  ignored; `__post_init__` validation messages are internal, not public API.
+- One test scenario corrected during implementation: `test_no_retreat_below_none`
+  originally used 100h elapsed, which drained the social score to 0 and
+  triggered vampiric advance — contradicting the test's intent. Fixed to 1h.

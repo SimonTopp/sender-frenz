@@ -51,6 +51,9 @@ ignore = [
     # D203 conflicts with D211; D213 conflicts with D212 — pick one of each pair
     "D203",
     "D213",
+    # TRY003: dataclass __post_init__ validation messages are not public API;
+    # creating a custom exception hierarchy for simple range checks is overengineering.
+    "TRY003",
 ]
 
 [tool.ruff.lint.pydocstyle]
