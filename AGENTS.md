@@ -38,6 +38,62 @@ These principles from PEP 20 guide every decision in this codebase:
 
 ---
 
+## Plans as Documentation
+
+Implementation plans live in `docs/plans/` and are **permanent artefacts**,
+not throwaway notes. They serve as the authoritative record of *why* a module
+was designed the way it was.
+
+### File naming
+
+```
+MM_YYYY_<slug>.md
+```
+
+Examples: `04_2026_common-foundations.md`, `05_2026_required-maintenance.md`
+
+The date prefix is the month the plan was *written*, not when implementation
+started or finished. Slugs are lowercase, hyphen-separated, and describe the
+feature or module being planned.
+
+### Plan lifecycle
+
+Every plan has a `Status` field at the top. Valid values:
+
+| Status | Meaning |
+|---|---|
+| `PLANNED` | Written but implementation not started |
+| `IN PROGRESS` | Actively being implemented |
+| `COMPLETE` | Fully implemented, tested, and merged |
+| `SUPERSEDED` | Replaced by a newer plan (link to replacement) |
+
+Agents must update the `Status` field when they start and finish work on a
+plan. Do not delete superseded plans — add a note and link to the replacement.
+
+### When to write a plan
+
+- Before starting any new module or significant sub-feature
+- When a non-obvious architectural decision is made mid-implementation
+  (add an "Architectural Decisions" section and update status)
+- When an open question from a plan is resolved during implementation
+
+### What a plan must include
+
+- **Goal** — one paragraph on what this solves and what it does not
+- **Files** — each file with its key types and function signatures (stubs ok)
+- **Implementation order** — which files come first and why
+- **Test strategy** — patterns and edge cases to cover
+- **Open questions** — unresolved decisions, with proposed answers where possible
+- **Definition of done** — checklist; mark items complete as they land
+
+### Relationship to code
+
+Plans are not specs that must be followed exactly. If implementation reveals
+a better approach, change the code and update the plan. The plan reflects
+what was built, not what was originally imagined.
+
+---
+
 ## Self-Documenting Repository
 
 The repository documents itself. Agents must uphold this:
@@ -135,6 +191,34 @@ Agents must treat stale documentation as a bug:
 
 ---
 
+## Game Pacing and Time Scale
+
+All time-based constants in this game derive from a `GamePace` multiplier
+defined in `src/sender_frenz/common/config.py`. Three named instances exist:
+
+| Constant | `time_scale` | Use |
+|---|---|---|
+| `PRODUCTION_PACE` | `1.0` | Live game |
+| `TEST_PACE` | `720.0` | Integration tests / demos (1 real hour ≈ 30 game days) |
+| `FAST_TEST_PACE` | `43200.0` | Smoke tests (1 real minute ≈ 30 game days) |
+
+**Rules for agents:**
+
+1. Never hardcode a rate, duration, or threshold that depends on real time.
+   Always derive it from a `GamePace` via a `from_pace(pace)` class method.
+2. Unit tests that test pure arithmetic may construct configs directly with
+   whatever values the test needs. They do not use the named pace instances.
+3. Integration and end-to-end tests must use `TEST_PACE` or `FAST_TEST_PACE`,
+   never `PRODUCTION_PACE` (which would require real waiting).
+4. Application entry points inject `PRODUCTION_PACE` at the top level and
+   pass it down. Nothing inside `common` (or any other module) imports a pace
+   constant directly — it is always received as a parameter.
+
+This pattern ensures the full game lifecycle can be exercised in automated
+tests in under a minute while production behaviour is identical code.
+
+---
+
 ## AI-First Development Practices
 
 1. **Readable by agents and humans alike.** Write code that is unambiguous to
@@ -192,6 +276,7 @@ Before marking any task complete, an agent must verify:
 - [ ] Any documentation that references changed behavior has been updated
 - [ ] The commit message clearly describes *why* the change was made
 - [ ] Any player-facing content follows `docs/aesthetic.md`
+- [ ] If a plan exists for this work, its `Status` and open questions are updated
 
 ---
 
