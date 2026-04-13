@@ -1,6 +1,6 @@
 # Plan: social_maintenance — Social Health Engine
 
-**Status:** PLANNED
+**Status:** IN PROGRESS
 **Written:** April 2026
 
 ---
@@ -62,7 +62,7 @@ class InteractionKind(StrEnum):
 
 VISIT_SCORE_BOOST: float = 0.25
 GIFT_SCORE_BOOST:  float = 0.15
-CHAT_SCORE_BOOST:  float = 0.10
+CHAT_SCORE_BOOST:  float = 0.05
 
 @dataclass(frozen=True)
 class InteractionResult:

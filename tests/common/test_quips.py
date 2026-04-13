@@ -26,6 +26,9 @@ class TestQuipTrigger:
             "SOCIAL_WARNING",
             "SOCIAL_CRITICAL",
             "LOGIN",
+            "VISIT",
+            "GIFT",
+            "CHAT",
         }
         assert names == expected
 
