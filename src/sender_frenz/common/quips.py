@@ -35,6 +35,9 @@ class QuipTrigger(StrEnum):
         SOCIAL_WARNING: Social score approaching critical.
         SOCIAL_CRITICAL: Social score at or below critical threshold.
         LOGIN: Player has started a session.
+        VISIT: Avatar visited another avatar, or received a visitor.
+        GIFT: Gift sent or received.
+        CHAT: Message sent or received.
     """
 
     FEED = "feed"
@@ -48,6 +51,9 @@ class QuipTrigger(StrEnum):
     SOCIAL_WARNING = "social_warning"
     SOCIAL_CRITICAL = "social_critical"
     LOGIN = "login"
+    VISIT = "visit"
+    GIFT = "gift"
+    CHAT = "chat"
 
 
 # ---------------------------------------------------------------------------
@@ -211,6 +217,39 @@ _QUIPS: dict[QuipTrigger, tuple[str, ...]] = {
         "PARTICIPANT CONFIRMED. Biometric verification complete. Your avatar's"
         " status has been compiled into a report that is both informative and"
         " mildly concerning. THE SYSTEM looks forward to your review.",
+    ),
+    QuipTrigger.VISIT: (
+        "SOCIAL INTERACTION LOGGED. Physical proximity with another registered"
+        " entity has been detected and recorded. Warmth metrics spiking."
+        " THE SYSTEM did not see that coming. Updating projections.",
+        "VISIT EVENT CONFIRMED. Your avatar has been in the same space as"
+        " another avatar. Both parties appear to have survived. THE SYSTEM"
+        " notes this outcome as statistically encouraging.",
+        "CONTACT PROTOCOL EXECUTED. Another entity entered your avatar's"
+        " designated zone and remained there voluntarily. Social score"
+        " adjusted upward. THE SYSTEM approves of this development. Cautiously.",
+    ),
+    QuipTrigger.GIFT: (
+        "GIFT TRANSACTION LOGGED. An item has changed hands between registered"
+        " participants. The gesture has been classified as prosocial. THE SYSTEM"
+        " finds this touching in a way it cannot fully account for.",
+        "EXCHANGE EVENT RECORDED. Something was given. Something was received."
+        " The metrics improved. THE SYSTEM is choosing not to analyse the"
+        " motivations here. Some things are better left unquantified.",
+        "MATERIAL TRANSFER CONFIRMED. An object has been conveyed as a gesture"
+        " of social investment. Social score updated accordingly. THE SYSTEM"
+        " acknowledges that this was, in its way, almost sweet.",
+    ),
+    QuipTrigger.CHAT: (
+        "COMMUNICATION EVENT LOGGED. Text-based contact between participants"
+        " has been detected. Social score marginally improved. THE SYSTEM"
+        " has read the message. THE SYSTEM has no further comment at this time.",
+        "MESSAGE TRANSMISSION CONFIRMED. Words were exchanged. Connections were,"
+        " in the loosest possible sense, made. THE SYSTEM notes the effort."
+        " THE SYSTEM is not a romantic about effort. But it notes it.",
+        "CHAT PROTOCOL EXECUTED. A message has been sent and presumably"
+        " received. The social score has been updated to reflect this"
+        " minimal but genuine act of reaching out. THE SYSTEM is proud of you.",
     ),
 }
 
