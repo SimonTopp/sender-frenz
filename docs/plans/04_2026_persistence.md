@@ -1,6 +1,6 @@
 # Plan: persistence — Serialization and Storage
 
-**Status:** PLANNED
+**Status:** COMPLETE
 **Written:** April 2026
 
 ---
@@ -320,14 +320,14 @@ class MemoryStore:
 
 ## Definition of Done
 
-- [ ] `snapshots.py` implemented and noted in `__init__.py`
-- [ ] `serialization.py` implemented and noted in `__init__.py`
-- [ ] `store.py` implemented and noted in `__init__.py`
-- [ ] `tests/persistence/test_snapshots.py` written; all tests pass
-- [ ] `tests/persistence/test_serialization.py` written; all tests pass
-- [ ] `tests/persistence/test_store.py` written; all tests pass
-- [ ] `uv run ruff format --check .` passes
-- [ ] `uv run ruff check .` passes
-- [ ] `uv run mypy .` passes
-- [ ] `uv run pytest` passes at 100% coverage
-- [ ] Plan status updated to COMPLETE
+- [x] `snapshots.py` implemented and noted in `__init__.py`
+- [x] `serialization.py` implemented and noted in `__init__.py`
+- [x] `store.py` implemented and noted in `__init__.py`
+- [x] `tests/persistence/test_snapshots.py` written; all tests pass
+- [x] `tests/persistence/test_serialization.py` written; all tests pass
+- [x] `tests/persistence/test_store.py` written; all tests pass
+- [x] `uv run ruff format --check .` passes
+- [x] `uv run ruff check .` passes
+- [x] `uv run mypy .` passes
+- [x] `uv run pytest` passes at 100% coverage
+- [x] Plan status updated to COMPLETE
