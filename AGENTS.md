@@ -40,21 +40,21 @@ These principles from PEP 20 guide every decision in this codebase:
 
 ## Plans as Documentation
 
-Implementation plans live in `docs/plans/` and are **permanent artefacts**,
-not throwaway notes. They serve as the authoritative record of *why* a module
-was designed the way it was.
+Implementation plans live in `docs/` alongside reference docs and are
+**permanent artefacts**, not throwaway notes. They serve as the authoritative
+record of *why* a module was designed the way it was. See
+[docs/README.md](docs/README.md) for a full table of contents.
 
 ### File naming
 
 ```
-MM_YYYY_<slug>.md
+<slug>.md
 ```
 
-Examples: `04_2026_common-foundations.md`, `05_2026_required-maintenance.md`
+Examples: `common-foundations.md`, `required-maintenance.md`
 
-The date prefix is the month the plan was *written*, not when implementation
-started or finished. Slugs are lowercase, hyphen-separated, and describe the
-feature or module being planned.
+Slugs are lowercase, hyphen-separated, and describe the feature or module.
+No date prefix — git history records when a file was created.
 
 ### Plan lifecycle
 
