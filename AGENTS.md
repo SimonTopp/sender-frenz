@@ -40,21 +40,21 @@ These principles from PEP 20 guide every decision in this codebase:
 
 ## Plans as Documentation
 
-Implementation plans live in `docs/plans/` and are **permanent artefacts**,
-not throwaway notes. They serve as the authoritative record of *why* a module
-was designed the way it was.
+Implementation plans live in `docs/` alongside reference docs and are
+**permanent artefacts**, not throwaway notes. They serve as the authoritative
+record of *why* a module was designed the way it was. See
+[docs/README.md](docs/README.md) for a full table of contents.
 
 ### File naming
 
 ```
-MM_YYYY_<slug>.md
+<slug>.md
 ```
 
-Examples: `04_2026_common-foundations.md`, `05_2026_required-maintenance.md`
+Examples: `common-foundations.md`, `required-maintenance.md`
 
-The date prefix is the month the plan was *written*, not when implementation
-started or finished. Slugs are lowercase, hyphen-separated, and describe the
-feature or module being planned.
+Slugs are lowercase, hyphen-separated, and describe the feature or module.
+No date prefix — git history records when a file was created.
 
 ### Plan lifecycle
 
@@ -216,6 +216,99 @@ defined in `src/sender_frenz/common/config.py`. Three named instances exist:
 
 This pattern ensures the full game lifecycle can be exercised in automated
 tests in under a minute while production behaviour is identical code.
+
+---
+
+## Core Contracts
+
+These contracts recur throughout the codebase. Every agent working in any
+layer should understand them before touching related code.
+
+### `sustained_since` — Level-Up Eligibility Window
+
+`sustained_since: Timestamp | None` lives on `GameSnapshot` and tracks when
+the avatar *first* crossed the health threshold required to level up.
+
+| State | Value | Meaning |
+|---|---|---|
+| Below threshold | `None` | Not eligible; timer not running |
+| Just crossed threshold | `now` | Eligible; window starts |
+| Still above threshold | unchanged (original `now`) | Window continues |
+| Drops below threshold | `None` | Eligibility lost; window resets |
+| After level-up | `None` | Reset so the next level starts fresh |
+
+A level-up is only allowed when `sustained_since` has been set **and** the
+elapsed real time since that value exceeds the configured sustain window (4
+real hours at `PRODUCTION_PACE`).  The update logic lives in
+`src/sender_frenz/api/_helpers.py::update_sustained_since`.
+
+### `GameEvent` — The Animation Contract
+
+`process_tick` (in `src/sender_frenz/game_loop/tick.py`) returns a `TickResult`
+containing a tuple of `GameEvent` instances.  Each event represents a
+threshold that was *newly crossed* during the tick — not the current state,
+but the change.
+
+```
+TickResult.events  →  (GameEvent(kind=GameEventKind.HUNGER_WARNING, timestamp=…), …)
+```
+
+This tuple is the **canonical contract between game logic and the display
+layer**.  The renderer must never infer "what changed" by diffing state
+snapshots.  It reads the event tuple and triggers the corresponding
+animation.  `SessionState.events` (returned by `open_session`) carries the
+same tuple for replay on session open.
+
+Event kinds and their display implications:
+
+| Kind | Display trigger |
+|---|---|
+| `hunger_warning` | Amber pulse on hunger meter; avatar nudge |
+| `hunger_critical` | Red shake on hunger meter; avatar distress |
+| `hygiene_warning` | Amber pulse on hygiene meter |
+| `hygiene_critical` | Red shake on hygiene meter |
+| `social_warning` | Social bar dim |
+| `social_critical` | Social bar critical flash |
+| `vampiric_advance` | Stage transition animation (forward) |
+| `vampiric_retreat` | Stage transition animation (reverse) |
+| `level_up_ready` | Level-up badge appears |
+
+Events fire at most once per threshold crossing per tick.  Both `hunger_warning`
+and `hunger_critical` can fire in the same tick if a large time gap causes
+the avatar to drop through both thresholds in one `process_tick` call.
+
+### `TYPE_CHECKING` Import Pattern
+
+Many modules use the `TYPE_CHECKING` guard:
+
+```python
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sender_frenz.common.types import Timestamp
+    from sender_frenz.common.config import GamePace
+```
+
+**Why:** `from __future__ import annotations` makes all annotations lazy
+strings at runtime, so imports used *only* in annotations do not need to
+execute at runtime.  Moving them inside `if TYPE_CHECKING:` satisfies
+ruff's `TCH` rule ("move annotation-only imports to TYPE_CHECKING block"),
+avoids circular-import risk, and keeps the runtime import graph lean.
+
+**FastAPI exception:** Route handler files and `deps.py` are exempt from this
+pattern.  FastAPI calls `get_type_hints()` on dependency functions and route
+handlers at startup, which evaluates the string annotations — so those files
+need their types importable at runtime.  The `pyproject.toml` ruff config
+suppresses `TCH` for these files via `per-file-ignores`:
+
+```toml
+[tool.ruff.lint.per-file-ignores]
+"src/sender_frenz/api/deps.py" = ["TCH"]
+"src/sender_frenz/api/routes/*.py" = ["TCH"]
+```
+
+If you add a new FastAPI route file, add it to that list.
 
 ---
 
