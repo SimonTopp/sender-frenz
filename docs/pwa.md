@@ -53,7 +53,22 @@ web/
   avatar.js           renders SessionResponse / ActionResponse into DOM
   actions.js          POST /action/{kind} + optimistic UI
   level_up.js         upgrade picker flow
+
+tests/pwa/
+  conftest.py         live server fixture + Pixel 7 browser context
+  test_session.py     session open → correct DOM state
+  test_actions.py     all five actions end-to-end
+  test_level_up.py    upgrade picker flow
+  test_sse.py         SSE event received → correct CSS class applied
+  test_errors.py      missing header, unknown avatar, API unreachable
+
+.github/
+  workflows/
+    lighthouse.yml    PWA compliance check on every PR
 ```
+
+`pytest-playwright` is added to the dev dependency group.  No separate JS
+test toolchain is needed — everything runs through `uv run pytest`.
 
 ---
 
@@ -412,28 +427,72 @@ Phase 10 (native shell) handles background notifications via APNs / FCM.
 
 ## Test Strategy
 
-Manual, phone-targeted.  No Playwright or Puppeteer in Phase 9.
+Two tiers: automated Playwright for regression coverage, manual phone for
+things automation can't verify (install prompts, real touch feel, iOS quirks).
 
-**Checklist (run on actual phone, not emulator):**
+### Automated: Playwright
+
+`pytest-playwright` runs headless Chromium in a **Pixel 7 device profile**
+(412 × 915 viewport, `is_mobile=True`, `has_touch=True`, 2.625× DPR).  The
+same `uv run pytest` command that runs backend tests runs these.  A live
+FastAPI server is started per test session via a `conftest.py` fixture.
+
+**What Playwright covers:**
+
+| Suite | Scenarios |
+|---|---|
+| `test_session.py` | Session open → correct meter values, quips, avatar `data-*` attributes set |
+| `test_actions.py` | Each of the five actions → DOM updates, quip changes, button re-enables |
+| `test_level_up.py` | Badge appears when eligible; picker shows correct options; confirm applies upgrade |
+| `test_sse.py` | Publish event via `EventBus` directly → correct CSS class added to avatar element |
+| `test_errors.py` | Missing `Avatar-Id` header → error view; API unreachable → error + retry button |
+
+**What Playwright does NOT cover (manual only):**
+
+- PWA install prompt (requires HTTPS + native browser UI)
+- iOS Safari-specific behaviour (safe-area insets, background SSE kill/reconnect)
+- Actual touch feel, thumb reachability, and scroll momentum
+- Real network latency and LTE load time
+
+### Lighthouse CI
+
+A GitHub Actions workflow starts the FastAPI server and runs
+`@lhci/cli autorun` on every push and PR.  Fails if the PWA score drops below
+90.
+
+```yaml
+# .github/workflows/lighthouse.yml
+name: Lighthouse CI
+on: [push, pull_request]
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install uv && uv sync --group dev
+      - name: Start server
+        run: uvicorn sender_frenz.api:app --host 0.0.0.0 --port 8000 &
+      - run: sleep 2
+      - run: npx --yes @lhci/cli autorun --upload.target=temporary-public-storage
+```
+
+### Manual checklist (real phone, final gate before COMPLETE)
 
 - [ ] Opening the URL loads the main view within 2s on LTE
 - [ ] Session open displays avatar state and quips
-- [ ] Each action button calls the correct endpoint and updates the display
-- [ ] Quip updates after each action
-- [ ] Level-up badge appears when `level_up_available` is true
-- [ ] Level-up picker shows correct skin and room options
-- [ ] Confirming level-up applies upgrade and hides badge
-- [ ] Hunger/hygiene meters reflect actual values
-- [ ] SSE connection established (verify in Eruda network tab)
-- [ ] SSE event received and animation triggers
-- [ ] "Add to Home Screen" works on Android
+- [ ] Each action updates the display and shows a quip
+- [ ] Level-up badge appears, picker works, upgrade applies
+- [ ] SSE connection visible in Eruda network tab; animation triggers on event
+- [ ] "Add to Home Screen" prompt fires on Android
 - [ ] iOS install banner shows on second visit
-- [ ] Installed PWA launches in standalone mode
+- [ ] Installed PWA launches in standalone mode (no browser chrome)
 - [ ] Back-swipe / gesture navigation does not break app state
 - [ ] Rotating to landscape does not break layout
-- [ ] Action buttons reachable with one thumb
-- [ ] Social action buttons visually grouped and separable from maintenance
-- [ ] App reconnects SSE after background time (iOS Safari kills SSE)
+- [ ] Action buttons reachable with one thumb; no accidental adjacent taps
+- [ ] Social action buttons visually distinct from maintenance buttons
+- [ ] App reconnects SSE after returning from background (iOS Safari kills SSE)
 - [ ] `?debug=1` loads Eruda; production URL does not
 
 ---
@@ -446,9 +505,10 @@ Manual, phone-targeted.  No Playwright or Puppeteer in Phase 9.
 - [ ] All nine `GameEvent` kinds trigger a visible animation or UI change
 - [ ] Avatar display uses layered div structure (body, skin-layer, room-layer, status-fx)
 - [ ] Social action buttons visually grouped, layout accommodates future peer-interaction flow
-- [ ] PWA manifest passes Chrome's PWA criteria checker (Lighthouse)
+- [ ] `uv run pytest tests/pwa/` passes headless (Pixel 7 profile)
+- [ ] `.github/workflows/lighthouse.yml` present; PWA score ≥ 90
 - [ ] Service worker caches shell assets; API calls bypass cache
-- [ ] Manual test checklist above completed on real phone
+- [ ] Manual checklist above completed on real phone
 - [ ] Eruda guard in place (`?debug=1` only)
 - [ ] No console errors in production mode
 - [ ] `docs/pwa.md` status updated to COMPLETE
