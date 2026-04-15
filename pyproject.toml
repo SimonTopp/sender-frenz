@@ -10,12 +10,18 @@ name = "sender-frenz"
 version = "0.1.0"
 description = "A social Tamagotchi — raise your avatar from bare bones to a thriving creature."
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+]
 
 [dependency-groups]
 dev = [
+    "anyio>=4.0",
+    "httpx>=0.28",
     "mypy>=1.10",
     "pytest>=8.0",
+    "pytest-asyncio>=0.23",
     "pytest-cov>=5.0",
     "ruff>=0.9",
 ]
@@ -62,6 +68,10 @@ convention = "google"
 [tool.ruff.lint.per-file-ignores]
 # Tests don't need full annotation coverage or module-level docstrings
 "tests/**/*.py" = ["ANN", "D"]
+# FastAPI evaluates annotations at runtime via get_type_hints(); imports used in
+# Annotated[T, Depends(f)] signatures must be top-level, not in TYPE_CHECKING.
+"src/sender_frenz/api/deps.py" = ["TCH"]
+"src/sender_frenz/api/routes/*.py" = ["TCH"]
 
 # ---------------------------------------------------------------------------
 # Mypy — static type checking
@@ -75,12 +85,18 @@ warn_unused_configs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 
+[[tool.mypy.overrides]]
+module = ["tests.*", "tests.*.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
 # ---------------------------------------------------------------------------
 # Pytest + coverage
 # ---------------------------------------------------------------------------
 [tool.pytest.ini_options]
 addopts = "--cov=src/sender_frenz --cov-report=term-missing --cov-fail-under=100"
 testpaths = ["tests"]
+asyncio_mode = "auto"
 
 [tool.coverage.run]
 branch = true
