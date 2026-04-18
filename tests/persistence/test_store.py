@@ -123,3 +123,30 @@ class TestMemoryStoreSave:
         store.save(snap2)
         assert store.load(av1.id) == snap1
         assert store.load(av2.id) == snap2
+
+
+# ---------------------------------------------------------------------------
+# MemoryStore.list_ids
+# ---------------------------------------------------------------------------
+
+
+class TestMemoryStoreListIds:
+    def test_empty_store_returns_empty_tuple(self) -> None:
+        assert MemoryStore().list_ids() == ()
+
+    def test_returns_id_after_save(self) -> None:
+        store = MemoryStore()
+        av = _avatar()
+        store.save(_snapshot(av))
+        assert av.id in store.list_ids()
+
+    def test_returns_all_stored_ids(self) -> None:
+        store = MemoryStore()
+        av1 = _avatar()
+        av2 = _avatar()
+        store.save(_snapshot(av1))
+        store.save(_snapshot(av2))
+        ids = store.list_ids()
+        assert av1.id in ids
+        assert av2.id in ids
+        assert len(ids) == 2
