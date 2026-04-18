@@ -38,16 +38,20 @@
 
     <div class="meters">
       <div class="meter">
-        <label>HUNGER</label>
-        <div class="meter__bar"><div class="meter__fill" id="meter-hunger"></div></div>
+        <span class="meter__label">HUNGER</span>
+        <div class="meter__bar" role="meter" aria-label="Hunger" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+          <div class="meter__fill" id="meter-hunger"></div>
+        </div>
       </div>
       <div class="meter">
-        <label>HYGIENE</label>
-        <div class="meter__bar"><div class="meter__fill" id="meter-hygiene"></div></div>
+        <span class="meter__label">HYGIENE</span>
+        <div class="meter__bar" role="meter" aria-label="Hygiene" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+          <div class="meter__fill" id="meter-hygiene"></div>
+        </div>
       </div>
     </div>
 
-    <div class="social-bar">
+    <div class="social-bar" role="meter" aria-label="Social" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
       <div class="social-bar__fill" id="meter-social"></div>
     </div>
     <span id="social-stage-label"></span>

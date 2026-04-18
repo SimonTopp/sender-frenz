@@ -138,7 +138,7 @@ html, body {
 
 /* ── Meters ──────────────────────────────────────────────────────────────── */
 .meters { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 0.5rem; }
-.meter label {
+.meter__label {
   display: block;
   font-size: 0.75rem;
   letter-spacing: 0.12em;

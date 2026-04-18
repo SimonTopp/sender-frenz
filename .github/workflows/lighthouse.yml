@@ -16,7 +16,10 @@ jobs:
       - name: Start server
         run: uv run uvicorn sender_frenz.api:app --host 0.0.0.0 --port 8000 &
       - name: Wait for server
-        run: sleep 3
+        run: |
+          for i in $(seq 1 15); do
+            curl -sf http://localhost:8000/ && break || sleep 1
+          done
       - name: Run Lighthouse CI
         run: npx --yes @lhci/cli@0.14 autorun
         env:
