@@ -45,6 +45,15 @@ class StoreProtocol(Protocol):
         """
         ...  # pragma: no cover
 
+    def list_ids(self) -> tuple[AvatarId, ...]:
+        """Return all stored avatar IDs.
+
+        Returns:
+            Tuple of every :class:`~sender_frenz.common.types.AvatarId`
+            currently in the store.  Empty when the store is empty.
+        """
+        ...  # pragma: no cover
+
 
 class MemoryStore:
     """In-memory snapshot store backed by a plain dict.
@@ -78,3 +87,12 @@ class MemoryStore:
             snapshot: The snapshot to persist.
         """
         self._snapshots[snapshot.avatar.id] = snapshot
+
+    def list_ids(self) -> tuple[AvatarId, ...]:
+        """Return all stored avatar IDs.
+
+        Returns:
+            Tuple of every :class:`~sender_frenz.common.types.AvatarId`
+            currently in the store.  Empty when the store is empty.
+        """
+        return tuple(self._snapshots)

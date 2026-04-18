@@ -11,7 +11,8 @@ The ``web/`` directory is served as static files at ``/`` so that a single
 
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
+import asyncio
+from contextlib import asynccontextmanager, suppress
 from typing import TYPE_CHECKING
 
 from fastapi import FastAPI
@@ -26,6 +27,7 @@ from sender_frenz.api.routes.level_up import router as level_up_router
 from sender_frenz.api.routes.session import router as session_router
 from sender_frenz.api.routes.stream import router as stream_router
 from sender_frenz.common.config import PRODUCTION_PACE
+from sender_frenz.game_loop.scheduler import run_scheduler
 from sender_frenz.persistence.store import MemoryStore
 
 
@@ -47,7 +49,15 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.store = MemoryStore()
     app.state.bus = EventBus()
     app.state.pace = PRODUCTION_PACE
-    yield
+    app.state.scheduler_task = asyncio.create_task(
+        run_scheduler(app.state.store, app.state.bus, app.state.pace)
+    )
+    try:
+        yield
+    finally:
+        app.state.scheduler_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await app.state.scheduler_task
 
 
 app = FastAPI(title="sender-frenz", lifespan=_lifespan)
