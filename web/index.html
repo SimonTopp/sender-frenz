@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/style.css">
+  <title>sender frenz</title>
+</head>
+<body>
+
+  <!-- Loading -->
+  <div id="view-loading" class="view">
+    <p class="loading-text">CONNECTING TO THE SYSTEM...</p>
+  </div>
+
+  <!-- Error -->
+  <div id="view-error" class="view view--hidden">
+    <p class="error-text">THE SYSTEM IS UNAVAILABLE.</p>
+    <p class="error-text" style="font-size:0.8rem;color:#555">YOUR ABSENCE HAS BEEN NOTED.</p>
+    <button id="btn-retry" class="btn">RETRY</button>
+  </div>
+
+  <!-- Main -->
+  <div id="view-main" class="view view--hidden">
+    <div class="avatar" id="avatar"
+         data-skin="" data-stage="dormant"
+         data-hunger="nourished" data-hygiene="clean">
+      <div class="avatar__body"></div>
+      <div class="avatar__skin-layer"></div>
+      <div class="avatar__room-layer"></div>
+      <div class="avatar__status-fx"></div>
+    </div>
+
+    <div class="meters">
+      <div class="meter">
+        <span class="meter__label">HUNGER</span>
+        <div class="meter__bar" role="meter" aria-label="Hunger" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+          <div class="meter__fill" id="meter-hunger"></div>
+        </div>
+      </div>
+      <div class="meter">
+        <span class="meter__label">HYGIENE</span>
+        <div class="meter__bar" role="meter" aria-label="Hygiene" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+          <div class="meter__fill" id="meter-hygiene"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="social-bar" role="meter" aria-label="Social" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+      <div class="social-bar__fill" id="meter-social"></div>
+    </div>
+    <span id="social-stage-label"></span>
+
+    <div id="level-up-badge" class="level-up-badge level-up-badge--hidden">
+      ▲ LEVEL UP AVAILABLE
+    </div>
+
+    <p id="quip" class="quip"></p>
+
+    <div class="actions">
+      <div class="actions__maintenance">
+        <button class="btn btn--action" data-action="feed">FEED</button>
+        <button class="btn btn--action" data-action="clean">CLEAN</button>
+      </div>
+      <div class="actions__social">
+        <button class="btn btn--action btn--social" data-action="visit">VISIT</button>
+        <button class="btn btn--action btn--social" data-action="gift">GIFT</button>
+        <button class="btn btn--action btn--social" data-action="chat">CHAT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Level-up picker -->
+  <div id="view-level-up" class="view view--hidden">
+    <h2>UPGRADE SELECTION</h2>
+    <div id="skin-options" class="options"></div>
+    <div id="room-options" class="options"></div>
+    <button id="btn-confirm-level-up" class="btn" disabled>CONFIRM UPGRADE</button>
+    <button id="btn-cancel-level-up" class="btn btn--secondary">BACK</button>
+  </div>
+
+  <script type="module" src="/app.js"></script>
+
+  <!-- Eruda mobile devtools — debug=1 only, never ships to production users -->
+  <script>
+    if (location.search.includes("debug=1")) {
+      const s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/eruda";
+      s.onload = () => eruda.init();
+      document.head.appendChild(s);
+    }
+  </script>
+</body>
+</html>
