@@ -4,6 +4,9 @@ The module-level ``app`` instance is the ASGI entry point consumed by
 uvicorn and by the test client::
 
     uvicorn sender_frenz.api:app
+
+The ``web/`` directory is served as static files at ``/`` so that a single
+``uvicorn`` process handles both the API and the PWA frontend.
 """
 
 from __future__ import annotations
@@ -12,6 +15,7 @@ from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
@@ -51,3 +55,4 @@ app.include_router(session_router)
 app.include_router(action_router)
 app.include_router(level_up_router)
 app.include_router(stream_router)
+app.mount("/", StaticFiles(directory="web", html=True), name="static")

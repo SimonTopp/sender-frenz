@@ -1,0 +1,23 @@
+name: Lighthouse CI
+on: [push, pull_request]
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install uv && uv sync --group dev
+      - name: Start server
+        run: uv run uvicorn sender_frenz.api:app --host 0.0.0.0 --port 8000 &
+      - name: Wait for server
+        run: sleep 3
+      - name: Run Lighthouse CI
+        run: npx --yes @lhci/cli@0.14 autorun
+        env:
+          LHCI_BUILD_CONTEXT__CURRENT_HASH: ${{ github.sha }}
+      env:
+        LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
