@@ -256,3 +256,25 @@ html, body {
 }
 .option-card:active             { background: #1a1a1a; }
 .option-card--selected          { border-color: var(--accent); color: var(--accent); }
+
+/* ── Install banner ──────────────────────────────────────────────────────── */
+.install-banner {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
+  left: 0.75rem;
+  right: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--accent);
+  z-index: 100;
+}
+.install-banner[hidden] { display: none; }
+.install-banner span { flex: 1; }
+.btn--install { font-size: 0.75rem; padding: 0.3rem 0.6rem; }
+.btn--dismiss { font-size: 0.85rem; padding: 0.2rem 0.5rem; min-width: 2rem; }

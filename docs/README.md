@@ -29,4 +29,5 @@ the plan lifecycle and contribution guidelines.
 | [game-loop.md](game-loop.md) | COMPLETE | Tick engine, session open, `GameEvent` animation contract |
 | [persistence.md](persistence.md) | COMPLETE | Snapshot serialization, `StoreProtocol`, `MemoryStore` |
 | [api.md](api.md) | COMPLETE | FastAPI endpoints, `EventBus`, SSE stream, dependency injection |
-| [pwa.md](pwa.md) | PLANNED | PWA frontend, CSS animation engine, phone-first UX, Cloudflare Tunnel dev workflow |
+| [pwa.md](pwa.md) | IN PROGRESS | PWA frontend, CSS animation engine, phone-first UX, install prompts |
+| [deploy.md](deploy.md) | ACTIVE | Fly.io, Railway, Cloudflare Tunnel — real-device testing guide |

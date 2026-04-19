@@ -2,6 +2,7 @@ import { renderAvatar, applyEvent } from "./avatar.js";
 import { bindActions } from "./actions.js";
 import { bindLevelUp } from "./level_up.js";
 import { showView } from "./ui.js";
+import { bindInstallPrompt } from "./install.js";
 
 const AVATAR_KEY = "sender-frenz-avatar-id";
 
@@ -65,4 +66,5 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js");
 }
 
+bindInstallPrompt();
 boot();
