@@ -6,13 +6,10 @@ dataclass that captures everything a display layer needs to render the avatar.
 
 No I/O.  No randomness.  Pure stat-to-visual mapping.
 
-Threshold mirroring
--------------------
-The hunger and hygiene thresholds defined here intentionally mirror the
-constants in ``sender_frenz.required_maintenance.actions``.  They are duplicated
-rather than imported to respect the architectural rule that non-``common``
-modules do not import from each other.  If these values are ever refactored into
-``common``, remove the local definitions and update the imports.
+Thresholds
+----------
+Hunger and hygiene thresholds are imported from
+:mod:`sender_frenz.common.thresholds` so every module agrees on the values.
 
 Composite label format
 ----------------------
@@ -39,40 +36,28 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
 from sender_frenz.common.models import VampiricStage
+from sender_frenz.common.thresholds import (
+    HUNGER_CRITICAL,
+    HUNGER_IDEAL_MAX,
+    HUNGER_MID,
+    HYGIENE_CRITICAL,
+    HYGIENE_IDEAL_MAX,
+    HYGIENE_MID,
+)
 
 if TYPE_CHECKING:
     from sender_frenz.common.models import Avatar
 
-# ---------------------------------------------------------------------------
-# Threshold constants
-# (Mirror required_maintenance.actions — see module docstring.)
-# ---------------------------------------------------------------------------
-
-HUNGER_IDEAL_MAX: float = 0.80
-"""Hunger above this value is visually over-nourished.
-
-Mirrors ``sender_frenz.required_maintenance.actions.HUNGER_IDEAL_MAX``.
-"""
-
-HYGIENE_IDEAL_MAX: float = 0.90
-"""Hygiene above this value is visually over-scrubbed.
-
-Mirrors ``sender_frenz.required_maintenance.actions.HYGIENE_IDEAL_MAX``.
-"""
-
-HUNGER_CRITICAL: float = 0.20
-"""Hunger at or below this value maps to the ``"starved"`` visual.
-
-Mirrors the default critical threshold in
-``sender_frenz.required_maintenance.needs``.
-"""
-
-HYGIENE_CRITICAL: float = 0.20
-"""Hygiene at or below this value maps to the ``"grimy"`` visual.
-
-Mirrors the default critical threshold in
-``sender_frenz.required_maintenance.needs``.
-"""
+__all__ = [
+    "HUNGER_CRITICAL",
+    "HUNGER_IDEAL_MAX",
+    "HYGIENE_CRITICAL",
+    "HYGIENE_IDEAL_MAX",
+    "AppearanceState",
+    "HungerVisual",
+    "HygieneVisual",
+    "compute_appearance",
+]
 
 # ---------------------------------------------------------------------------
 # Visual label types
@@ -99,10 +84,6 @@ Ordered from healthiest to most depleted:
 - ``"unkempt"``:       hygiene in (:data:`HYGIENE_CRITICAL`, 0.60]
 - ``"grimy"``:         hygiene ≤ :data:`HYGIENE_CRITICAL` (0.20)
 """
-
-# Midpoint thresholds used by the bucketing helpers.
-_HUNGER_MID: float = 0.50
-_HYGIENE_MID: float = 0.60
 
 
 # ---------------------------------------------------------------------------
@@ -152,7 +133,7 @@ def _hunger_visual(hunger: float) -> HungerVisual:
     """
     if hunger > HUNGER_IDEAL_MAX:
         return "over_nourished"
-    if hunger > _HUNGER_MID:
+    if hunger > HUNGER_MID:
         return "nourished"
     if hunger > HUNGER_CRITICAL:
         return "hungry"
@@ -170,7 +151,7 @@ def _hygiene_visual(hygiene: float) -> HygieneVisual:
     """
     if hygiene > HYGIENE_IDEAL_MAX:
         return "over_scrubbed"
-    if hygiene > _HYGIENE_MID:
+    if hygiene > HYGIENE_MID:
         return "clean"
     if hygiene > HYGIENE_CRITICAL:
         return "unkempt"

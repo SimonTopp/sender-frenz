@@ -8,6 +8,8 @@ from contextlib import suppress
 from dataclasses import replace
 from uuid import uuid4
 
+import pytest
+
 from sender_frenz.api.events import EventBus
 from sender_frenz.common.config import FAST_TEST_PACE
 from sender_frenz.common.models import (
@@ -85,6 +87,20 @@ class TestTickAll:
         queue = bus.subscribe(av.id)
         _tick_all(store, bus, FAST_TEST_PACE)
         assert not queue.empty()
+
+    def test_raises_when_listed_id_has_no_snapshot(self) -> None:
+        class BrokenStore:
+            def load(self, avatar_id: AvatarId) -> GameSnapshot | None:
+                return None
+
+            def save(self, snapshot: GameSnapshot) -> None:
+                pass
+
+            def list_ids(self) -> tuple[AvatarId, ...]:
+                return (AvatarId(uuid4()),)
+
+        with pytest.raises(RuntimeError, match="listed but not found"):
+            _tick_all(BrokenStore(), EventBus(), FAST_TEST_PACE)
 
     def test_no_events_when_no_threshold_crossed(self) -> None:
         store = MemoryStore()

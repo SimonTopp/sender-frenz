@@ -10,8 +10,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from sender_frenz.required_maintenance.actions import (
+from sender_frenz.common.thresholds import (
+    HUNGER_CRITICAL,
     HUNGER_IDEAL_MAX,
+    HYGIENE_CRITICAL,
     HYGIENE_IDEAL_MAX,
 )
 
@@ -19,11 +21,8 @@ if TYPE_CHECKING:
     from sender_frenz.common.models import Avatar
     from sender_frenz.common.types import Meter
 
-_DEFAULT_CRITICAL_THRESHOLD: Meter = 0.2
-"""Meter value at or below which a need is considered critical."""
 
-
-def is_hungry(avatar: Avatar, threshold: Meter = _DEFAULT_CRITICAL_THRESHOLD) -> bool:
+def is_hungry(avatar: Avatar, threshold: Meter = HUNGER_CRITICAL) -> bool:
     """Return ``True`` when hunger is at or below *threshold*.
 
     Args:
@@ -37,7 +36,7 @@ def is_hungry(avatar: Avatar, threshold: Meter = _DEFAULT_CRITICAL_THRESHOLD) ->
     return avatar.needs.hunger <= threshold
 
 
-def is_dirty(avatar: Avatar, threshold: Meter = _DEFAULT_CRITICAL_THRESHOLD) -> bool:
+def is_dirty(avatar: Avatar, threshold: Meter = HYGIENE_CRITICAL) -> bool:
     """Return ``True`` when hygiene is at or below *threshold*.
 
     Args:

@@ -34,12 +34,25 @@ from typing import TYPE_CHECKING
 
 from sender_frenz.common.models import Avatar, NeedState
 from sender_frenz.common.quips import QuipTrigger
+from sender_frenz.common.thresholds import HUNGER_IDEAL_MAX, HYGIENE_IDEAL_MAX
 
 if TYPE_CHECKING:
     from sender_frenz.common.config import GamePace
     from sender_frenz.common.decay import Decay
     from sender_frenz.common.quips import QuipCaller
     from sender_frenz.common.types import Timestamp
+
+__all__ = [
+    "CLEAN_RESTORE",
+    "FEED_RESTORE",
+    "HUNGER_IDEAL_MAX",
+    "HYGIENE_IDEAL_MAX",
+    "ActionResult",
+    "clean",
+    "feed",
+    "over_nourished_decay",
+    "over_scrubbed_decay",
+]
 
 # ---------------------------------------------------------------------------
 # Action restore constants
@@ -50,16 +63,6 @@ FEED_RESTORE: float = 0.40
 
 CLEAN_RESTORE: float = 0.50
 """Hygiene restored by a single clean action (Meter units)."""
-
-# ---------------------------------------------------------------------------
-# Ideal-maximum thresholds
-# ---------------------------------------------------------------------------
-
-HUNGER_IDEAL_MAX: float = 0.80
-"""Hunger above this value is considered over-nourished and incurs extra decay."""
-
-HYGIENE_IDEAL_MAX: float = 0.90
-"""Hygiene above this value is considered over-scrubbed and incurs extra decay."""
 
 # ---------------------------------------------------------------------------
 # Base over-care decay rates (time_scale = 1.0)
