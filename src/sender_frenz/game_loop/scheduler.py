@@ -31,7 +31,8 @@ def _tick_all(store: StoreProtocol, bus: EventBus, pace: GamePace) -> None:
     now = time.time()
     for avatar_id in store.list_ids():
         snapshot = store.load(avatar_id)
-        assert snapshot is not None
+        if snapshot is None:
+            raise RuntimeError(f"Avatar {avatar_id} listed but not found in store")
         result = process_tick(snapshot.avatar, now, pace)
         store.save(replace(snapshot, avatar=result.avatar, last_tick=now))
         if result.events:
